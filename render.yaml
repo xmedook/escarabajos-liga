@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: escarabajos-liga-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: escarabajos-liga-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: escarabajos-liga-db
+    databaseName: escarabajos_liga
+    user: escarabajos
+    plan: free
