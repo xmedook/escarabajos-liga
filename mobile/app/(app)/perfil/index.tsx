@@ -6,6 +6,13 @@ import { Colors } from '../../../constants/colors';
 import { useAuth } from '../../../contexts/AuthContext';
 import api from '../../../services/api';
 
+const ROL_COLORS: Record<string, string> = {
+  admin: '#dc2626',
+  coach: '#2563eb',
+  capitan: '#d97706',
+  jugador: '#16a34a',
+};
+
 interface Stats {
   goles: number;
   amarillas: number;
@@ -68,7 +75,7 @@ export default function PerfilScreen() {
         </View>
         <Text style={styles.name}>{user?.nombre}</Text>
         <Text style={styles.email}>{user?.email}</Text>
-        <View style={styles.rolBadge}>
+        <View style={[styles.rolBadge, { backgroundColor: ROL_COLORS[user?.rol || ''] || Colors.primary }]}>
           <Text style={styles.rolText}>{user?.rol?.toUpperCase()}</Text>
         </View>
       </View>
@@ -129,7 +136,7 @@ const styles = StyleSheet.create({
   avatarText: { color: Colors.white, fontSize: 28, fontWeight: 'bold' },
   name: { fontSize: 22, fontWeight: 'bold', color: Colors.text },
   email: { fontSize: 14, color: Colors.gray, marginTop: 4 },
-  rolBadge: { marginTop: 8, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: Colors.primary, borderRadius: 12 },
+  rolBadge: { marginTop: 8, paddingHorizontal: 14, paddingVertical: 4, borderRadius: 12 },
   rolText: { color: Colors.white, fontSize: 12, fontWeight: 'bold' },
   card: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 16, elevation: 1 },
   cardTitle: { fontSize: 17, fontWeight: 'bold', color: Colors.text, marginBottom: 12 },

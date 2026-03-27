@@ -21,7 +21,7 @@ export default function AsistenciaScreen() {
   const [miJugadorId, setMiJugadorId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const isCoach = user?.rol === 'coach' || user?.rol === 'admin';
+  const isCoachOrCapitanOrCapitan = user?.rol === 'admin' || user?.rol === 'coach' || user?.rol === 'capitan';
 
   useEffect(() => {
     fetchData();
@@ -60,7 +60,7 @@ export default function AsistenciaScreen() {
 
   async function confirmar(jugadorId: number, estado: 'si' | 'no') {
     if (!partidoId) return;
-    if (!isCoach && jugadorId !== miJugadorId) {
+    if (!isCoachOrCapitan && jugadorId !== miJugadorId) {
       Alert.alert('Error', 'Solo puedes confirmar tu propia asistencia');
       return;
     }
@@ -99,7 +99,7 @@ export default function AsistenciaScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={{ padding: 16 }}
         renderItem={({ item }) => {
-          const canEdit = isCoach || item.jugador_id === miJugadorId;
+          const canEdit = isCoachOrCapitan || item.jugador_id === miJugadorId;
           return (
             <View style={styles.card}>
               <View style={styles.playerInfo}>

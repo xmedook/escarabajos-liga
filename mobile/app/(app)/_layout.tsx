@@ -1,8 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AppLayout() {
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'admin';
+
   return (
     <Tabs
       screenOptions={{
@@ -41,6 +45,14 @@ export default function AppLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: 'Admin',
+          tabBarIcon: ({ color, size }) => <Ionicons name="shield-checkmark" size={size} color={color} />,
+          href: isAdmin ? undefined : null,
         }}
       />
     </Tabs>

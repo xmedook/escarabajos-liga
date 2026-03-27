@@ -8,6 +8,7 @@ const jugadoresRoutes = require('./routes/jugadores');
 const jornadasRoutes = require('./routes/jornadas');
 const partidosRoutes = require('./routes/partidos');
 const tablaRoutes = require('./routes/tabla');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use('/jugadores', jugadoresRoutes);
 app.use('/jornadas', jornadasRoutes);
 app.use('/partidos', partidosRoutes);
 app.use('/tabla-posiciones', tablaRoutes);
+app.use('/admin', adminRoutes);
 
 // Health check
 app.get('/', (_req, res) => {

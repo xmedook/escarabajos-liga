@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   nombre VARCHAR(100) NOT NULL,
-  rol VARCHAR(20) NOT NULL DEFAULT 'jugador' CHECK (rol IN ('admin', 'coach', 'jugador')),
+  rol VARCHAR(20) NOT NULL DEFAULT 'jugador' CHECK (rol IN ('admin', 'coach', 'capitan', 'jugador')),
   equipo_id INTEGER REFERENCES equipos(id),
   created_at TIMESTAMP DEFAULT NOW()
 );
