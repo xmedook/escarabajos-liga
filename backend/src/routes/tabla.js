@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const pool = require('../db/pool');
 const { authMiddleware } = require('../middleware/auth');
+const { sanitizeError } = require('../middleware/errorHandler');
 
 const router = Router();
 
@@ -41,7 +42,8 @@ router.get('/', authMiddleware, async (_req, res) => {
     `);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 

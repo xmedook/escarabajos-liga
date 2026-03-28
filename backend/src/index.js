@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const authRoutes = require('./routes/auth');
 const equiposRoutes = require('./routes/equipos');
@@ -13,8 +14,25 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.use(helmet());
+
+const allowedOrigins = [
+  "https://escarabajos-liga-web.onrender.com",
+  "http://localhost:8081",
+  "http://localhost:19006",
+  "exp://",
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || process.env.NODE_ENV !== "production") return callback(null, true);
+    if (allowedOrigins.some(o => origin.startsWith(o))) return callback(null, true);
+    callback(new Error("CORS: origen no permitido"));
+  },
+  credentials: true,
+}));
+
+app.use(express.json({ limit: "500kb" }));
 
 // Rutas
 app.use('/auth', authRoutes);

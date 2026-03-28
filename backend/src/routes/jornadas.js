@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const pool = require('../db/pool');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { sanitizeError } = require('../middleware/errorHandler');
 
 const router = Router();
 
@@ -9,7 +10,8 @@ router.get('/', authMiddleware, async (_req, res) => {
     const result = await pool.query('SELECT * FROM jornadas ORDER BY numero');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -22,7 +24,8 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -40,7 +43,8 @@ router.get('/:id/partidos', authMiddleware, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -53,7 +57,8 @@ router.post('/:id/partidos', authMiddleware, requireRole('admin'), async (req, r
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 

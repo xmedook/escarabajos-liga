@@ -3,6 +3,7 @@ const pool = require('../db/pool');
 const bcrypt = require('bcryptjs');
 const { authMiddleware } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/permissions');
+const { sanitizeError } = require('../middleware/errorHandler');
 
 const router = Router();
 
@@ -21,7 +22,8 @@ router.get('/usuarios', async (_req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -47,7 +49,8 @@ router.post('/usuarios', async (req, res) => {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'El email ya está registrado' });
     }
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -68,7 +71,8 @@ router.put('/usuarios/:id/rol', async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -85,7 +89,8 @@ router.put('/usuarios/:id/equipo', async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
@@ -101,7 +106,8 @@ router.delete('/usuarios/:id', async (req, res) => {
     }
     res.json({ message: 'Usuario eliminado', id: result.rows[0].id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
   }
 });
 
