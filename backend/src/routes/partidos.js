@@ -115,6 +115,25 @@ router.put('/:id/alineacion', authMiddleware, requireRole('admin', 'coach'), asy
   }
 });
 
+// Actualizar partido
+router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
+  try {
+    const { fecha, hora, lugar, goles_local, goles_visitante, estado } = req.body;
+    const result = await pool.query(
+      `UPDATE partidos SET
+        fecha = COALESCE($1, fecha), hora = COALESCE($2, hora), lugar = COALESCE($3, lugar),
+        goles_local = COALESCE($4, goles_local), goles_visitante = COALESCE($5, goles_visitante),
+        estado = COALESCE($6, estado)
+       WHERE id = $7 RETURNING *`,
+      [fecha, hora, lugar, goles_local, goles_visitante, estado, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Partido no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Stats del partido
 router.get('/:id/stats', authMiddleware, async (req, res) => {
   try {

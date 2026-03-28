@@ -1,78 +1,103 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '../../../constants/colors';
-
-const MENU_ITEMS = [
-  { icon: 'people' as const, label: 'Gestionar Equipos', color: '#2563eb', route: null },
-  { icon: 'football' as const, label: 'Gestionar Jugadores', color: '#16a34a', route: null },
-  { icon: 'calendar' as const, label: 'Gestionar Jornadas y Partidos', color: '#d97706', route: null },
-  { icon: 'key' as const, label: 'Gestionar Usuarios y Roles', color: '#dc2626', route: '/(app)/admin/usuarios' },
-];
+import AdminCard from '../../../components/AdminCard';
+import { equiposApi, jugadoresApi, jornadasApi } from '../../../services/api';
 
 export default function AdminPanel() {
+  const [stats, setStats] = useState({ equipos: 0, jugadores: 0, jornadas: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      equiposApi.list().then(r => r.data.length).catch(() => 0),
+      jugadoresApi.list().then(r => r.data.length).catch(() => 0),
+      jornadasApi.list().then(r => r.data.length).catch(() => 0),
+    ]).then(([equipos, jugadores, jornadas]) => setStats({ equipos, jugadores, jornadas }));
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="shield-checkmark" size={40} color={Colors.white} />
+        <Text style={styles.headerEmoji}>🛡️</Text>
         <Text style={styles.title}>Panel Admin Liga</Text>
+        <Text style={styles.subtitle}>Gestiona equipos, jugadores y jornadas</Text>
       </View>
 
-      <View style={styles.menu}>
-        {MENU_ITEMS.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            style={styles.card}
-            onPress={() => item.route && router.push(item.route as any)}
-            disabled={!item.route}
-          >
-            <View style={[styles.iconBox, { backgroundColor: item.color }]}>
-              <Ionicons name={item.icon} size={28} color={Colors.white} />
-            </View>
-            <Text style={styles.cardLabel}>{item.label}</Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={item.route ? Colors.gray : Colors.lightGray}
-            />
-          </TouchableOpacity>
-        ))}
+      <View style={styles.grid}>
+        <AdminCard
+          emoji="🏆"
+          title="Equipos"
+          count={stats.equipos}
+          onPress={() => router.push('/(app)/admin/equipos')}
+        />
+        <AdminCard
+          emoji="⚽"
+          title="Jugadores"
+          count={stats.jugadores}
+          onPress={() => router.push('/(app)/admin/jugadores')}
+        />
+        <AdminCard
+          emoji="📅"
+          title="Jornadas"
+          count={stats.jornadas}
+          onPress={() => router.push('/(app)/admin/jornadas')}
+        />
+        <AdminCard
+          emoji="👥"
+          title="Usuarios"
+          onPress={() => router.push('/(app)/admin/usuarios')}
+        />
       </View>
-    </View>
+
+      <View style={styles.statsSection}>
+        <Text style={styles.statsTitle}>Resumen rápido</Text>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{stats.equipos}</Text>
+            <Text style={styles.statLabel}>Equipos</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{stats.jugadores}</Text>
+            <Text style={styles.statLabel}>Jugadores</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{stats.jornadas}</Text>
+            <Text style={styles.statLabel}>Jornadas</Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: '#0f1a13' },
   header: {
-    backgroundColor: Colors.primary,
-    padding: 24,
+    backgroundColor: '#2d6a4f',
+    padding: 28,
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
-  title: { color: Colors.white, fontSize: 22, fontWeight: 'bold' },
-  menu: { padding: 16, gap: 12 },
-  card: {
+  headerEmoji: { fontSize: 44 },
+  title: { color: '#ffffff', fontSize: 24, fontWeight: 'bold' },
+  subtitle: { color: '#a7c4a7', fontSize: 14, marginTop: 4 },
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 12,
+    flexWrap: 'wrap',
     padding: 16,
-    elevation: 1,
-  },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
+    gap: 16,
     justifyContent: 'center',
   },
-  cardLabel: {
-    flex: 1,
-    marginLeft: 14,
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.text,
+  statsSection: {
+    backgroundColor: '#1a2e1f',
+    margin: 16,
+    marginTop: 0,
+    borderRadius: 16,
+    padding: 20,
   },
+  statsTitle: { color: '#52b788', fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-around' },
+  statItem: { alignItems: 'center' },
+  statNumber: { color: '#ffffff', fontSize: 28, fontWeight: 'bold' },
+  statLabel: { color: '#a7c4a7', fontSize: 12, marginTop: 4 },
 });
