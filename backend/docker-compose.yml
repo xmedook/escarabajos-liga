@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  api:
+    build: .
+    container_name: escarabajos-api
+    network_mode: host
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://neondb_owner:npg_OhNdKI1AuFR2@ep-misty-river-a4jvgj5x-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+    restart: unless-stopped
