@@ -1,0 +1,16 @@
+[nixpacks]
+PROVIDER = "node"
+
+[phases.setup]
+nixPkgs = ["..."]
+
+[phases.build]
+cmds = ["npm install"]
+
+[start]
+cmd = "node src/index.js"
+
+[variables]
+NODE_ENV = "production"
+NIXPACKS_NODE_VERSION = "22"
+
