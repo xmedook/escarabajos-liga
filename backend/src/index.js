@@ -14,6 +14,7 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1); // detrás de nginx/Cloudflare
 app.use(helmet());
 
 const allowedOrigins = [
