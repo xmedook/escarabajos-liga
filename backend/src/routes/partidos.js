@@ -2,8 +2,30 @@ const { Router } = require('express');
 const pool = require('../db/pool');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { sanitizeError } = require('../middleware/errorHandler');
+const { notify } = require('../services/notifications');
 
 const router = Router();
+
+// GET /partidos — listar todos con info de equipos y jornada
+router.get('/', authMiddleware, async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*,
+              el.nombre AS equipo_local_nombre,   el.color_primario AS color_local,
+              ev.nombre AS equipo_visitante_nombre, ev.color_primario AS color_visitante,
+              j.numero AS jornada_numero
+       FROM partidos p
+       JOIN equipos el ON el.id = p.equipo_local_id
+       JOIN equipos ev ON ev.id = p.equipo_visitante_id
+       LEFT JOIN jornadas j ON j.id = p.jornada_id
+       ORDER BY p.fecha ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
 
 // Asistencia
 router.get('/:id/asistencia', authMiddleware, async (req, res) => {
@@ -35,6 +57,29 @@ router.put('/:id/asistencia', authMiddleware, async (req, res) => {
       [req.params.id, jugador_id, confirmado]
     );
     res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
+
+// Abrir ventana de asistencia — notifica a todos los jugadores del equipo
+router.post('/:id/asistencia/abrir', authMiddleware, requireRole('admin', 'coach'), async (req, res) => {
+  try {
+    const partido = await pool.query(
+      `SELECT p.equipo_local_id, p.equipo_visitante_id,
+              el.nombre AS local, ev.nombre AS visitante
+       FROM partidos p
+       JOIN equipos el ON el.id = p.equipo_local_id
+       JOIN equipos ev ON ev.id = p.equipo_visitante_id
+       WHERE p.id = $1`, [req.params.id]
+    );
+    if (partido.rows.length === 0) return res.status(404).json({ error: 'Partido no encontrado' });
+    const pd = partido.rows[0];
+    const info = `${pd.local} vs ${pd.visitante}`;
+    notify.pedirAsistencia(pd.equipo_local_id, info).catch(() => {});
+    notify.pedirAsistencia(pd.equipo_visitante_id, info).catch(() => {});
+    res.json({ ok: true, mensaje: 'Notificaciones enviadas' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: sanitizeError(err) });
@@ -96,6 +141,23 @@ router.post('/:id/alineacion', authMiddleware, requireRole('admin', 'coach'), as
        WHERE al.partido_id = $1 ORDER BY al.titular DESC, j.dorsal`,
       [req.params.id]
     );
+
+    // Notificar al equipo que la alineación fue publicada
+    const partido = await pool.query(
+      `SELECT p.equipo_local_id, p.equipo_visitante_id,
+              el.nombre AS local, ev.nombre AS visitante
+       FROM partidos p
+       JOIN equipos el ON el.id = p.equipo_local_id
+       JOIN equipos ev ON ev.id = p.equipo_visitante_id
+       WHERE p.id = $1`, [req.params.id]
+    );
+    if (partido.rows.length > 0) {
+      const pd = partido.rows[0];
+      const info = `${pd.local} vs ${pd.visitante}`;
+      notify.alineacionPublicada(pd.equipo_local_id, info).catch(() => {});
+      notify.alineacionPublicada(pd.equipo_visitante_id, info).catch(() => {});
+    }
+
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -122,7 +184,7 @@ router.put('/:id/alineacion', authMiddleware, requireRole('admin', 'coach'), asy
 });
 
 // Actualizar partido
-router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
+router.put('/:id', authMiddleware, requireRole('admin', 'coach'), async (req, res) => {
   try {
     const { fecha, hora, lugar, goles_local, goles_visitante, estado } = req.body;
     const result = await pool.query(

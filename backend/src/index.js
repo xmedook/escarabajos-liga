@@ -17,6 +17,7 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 
 const allowedOrigins = [
+  "https://escarabajos.nexosrv.one",
   "https://escarabajos-liga-web.onrender.com",
   "http://localhost:8081",
   "http://localhost:19006",
@@ -50,4 +51,6 @@ app.get('/', (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Escarabajos Liga API corriendo en puerto ${PORT}`);
+  const { startPartidoCron } = require('./services/partidoCron');
+  startPartidoCron();
 });

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import { registerPushToken, unregisterPushToken } from '../services/pushNotifications';
 
 interface User {
   id: number;
@@ -76,9 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem('user', JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
+    // Registrar push token en segundo plano (no bloquea el login)
+    registerPushToken().catch(() => {});
   }
 
   async function logout() {
+    await unregisterPushToken();
     await AsyncStorage.multiRemove(['token', 'user']);
     setToken(null);
     setUser(null);

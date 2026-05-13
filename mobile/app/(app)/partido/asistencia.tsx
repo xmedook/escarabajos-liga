@@ -21,7 +21,7 @@ export default function AsistenciaScreen() {
   const [miJugadorId, setMiJugadorId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const isCoachOrCapitanOrCapitan = user?.rol === 'admin' || user?.rol === 'coach' || user?.rol === 'capitan';
+  const isCoachOrCapitan = user?.rol === 'admin' || user?.rol === 'coach' || user?.rol === 'capitan';
 
   useEffect(() => {
     fetchData();

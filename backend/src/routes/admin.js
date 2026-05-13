@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { authMiddleware } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/permissions');
 const { sanitizeError } = require('../middleware/errorHandler');
+const { notify, sendPush } = require('../services/notifications');
 
 const router = Router();
 
@@ -107,6 +108,49 @@ router.delete('/usuarios/:id', async (req, res) => {
     res.json({ message: 'Usuario eliminado', id: result.rows[0].id });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
+
+// POST /admin/notificaciones/broadcast — enviar push a todos o a un equipo
+router.post('/notificaciones/broadcast', async (req, res) => {
+  try {
+    const { titulo, cuerpo, equipo_id } = req.body;
+    if (!titulo || !cuerpo) {
+      return res.status(400).json({ error: 'titulo y cuerpo son requeridos' });
+    }
+    const query = equipo_id
+      ? 'SELECT push_token FROM usuarios WHERE equipo_id = $1 AND push_token IS NOT NULL'
+      : 'SELECT push_token FROM usuarios WHERE push_token IS NOT NULL';
+    const params = equipo_id ? [equipo_id] : [];
+    const { rows } = await pool.query(query, params);
+    const tokens = rows.map(r => r.push_token);
+    await sendPush(tokens, titulo, cuerpo, { type: 'broadcast' });
+    res.json({ ok: true, enviadas: tokens.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
+
+// POST /admin/notificaciones/asistencia/:partidoId — pedir asistencia
+router.post('/notificaciones/asistencia/:partidoId', async (req, res) => {
+  try {
+    const partido = await pool.query(
+      `SELECT p.equipo_local_id, p.equipo_visitante_id,
+              el.nombre AS local, ev.nombre AS visitante
+       FROM partidos p
+       JOIN equipos el ON el.id = p.equipo_local_id
+       JOIN equipos ev ON ev.id = p.equipo_visitante_id
+       WHERE p.id = $1`, [req.params.partidoId]
+    );
+    if (partido.rows.length === 0) return res.status(404).json({ error: 'Partido no encontrado' });
+    const pd = partido.rows[0];
+    const info = `${pd.local} vs ${pd.visitante}`;
+    await notify.pedirAsistencia(pd.equipo_local_id, info);
+    await notify.pedirAsistencia(pd.equipo_visitante_id, info);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: sanitizeError(err) });
   }
 });

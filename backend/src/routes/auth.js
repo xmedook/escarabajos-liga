@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const pool = require('../db/pool');
 const { sanitizeError } = require('../middleware/errorHandler');
+const { authMiddleware } = require('../middleware/auth');
+const { notify } = require('../services/notifications');
 
 const router = Router();
 
@@ -94,6 +96,29 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
+
+// Guardar / actualizar push token del dispositivo
+router.post('/push-token', authMiddleware, async (req, res) => {
+  try {
+    const { push_token } = req.body;
+    if (!push_token) return res.status(400).json({ error: 'push_token requerido' });
+
+    await pool.query('UPDATE usuarios SET push_token = $1 WHERE id = $2', [push_token, req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: sanitizeError(err) });
+  }
+});
+
+// Eliminar push token (logout del dispositivo)
+router.delete('/push-token', authMiddleware, async (req, res) => {
+  try {
+    await pool.query('UPDATE usuarios SET push_token = NULL WHERE id = $1', [req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: sanitizeError(err) });
   }
 });
